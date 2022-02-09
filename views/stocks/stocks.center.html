@@ -1,0 +1,195 @@
+<div class="container-xl">
+    {{ .StocksModuleNav }}
+
+    <div class="row">
+        <div class="col-8">
+            <div class="card">
+                <ul class="nav nav-tabs nav-tabs-alt" data-toggle="tabs">
+                  {{ range $index, $map := .GroupList }} 
+                  <li class="nav-item">
+                    <a href="#tabs-{{ $map.grp_id }}" class="nav-link {{if eq $index 0}} active {{ end}}" data-toggle="tab"><!-- SVG icon code -->
+                      {{ $map.grp_name }}
+                    </a>
+                  </li>
+                  {{ end }}
+                  <li class="nav-item ml-auto">
+                    <a href="/stocks/center/group" target="_self" class="nav-link" title="管理分组">
+                        管理分组
+                    </a>
+                  </li>
+                </ul>
+                <div class="card-body">
+                  <div class="tab-content">
+                      {{ range $index, $map := .GroupList }}
+                            <div class="tab-pane show {{if eq $index 0}} active {{ end}}" id="tabs-{{ $map.grp_id }}">
+                              {{ range $i, $s := $map.grp_abbr }}
+                              <div class="card">
+                                <div class="card-body">
+                                  <h3 class="card-title">
+                                    {{ $s.abbr }} {{ $s.code }} 
+                                    <div class="btn-group d-inline float-right">
+                                      <!-- Button trigger modal -->
+                                      <button type="button" class="btn btn-link btn-sm" data-stabbr="{{ $s.abbr }}" data-stcode="{{ $s.code }}" data-toggle="modal" data-target="#exampleModal">
+                                        分组
+                                      </button>
+                                    </div>
+                                    <!-- 分析 -->
+                                    <div class="btn-group d-inline float-right">
+                                      <button type="button" class="btn btn-link btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        分析
+                                      </button>
+                                      <div class="dropdown-menu">
+                                        <a class="dropdown-item" target="_blank" href="https://xueqiu.com/snowman/S/{{ $s.kind }}{{ $s.code }}/detail#/GSJJ">公司简介</a>
+                                        <a class="dropdown-item" target="_blank" href="https://xueqiu.com/snowman/S/{{ $s.kind }}{{ $s.code }}/detail#/SDGD">十大股东</a>
+                                        <a class="dropdown-item" target="_blank" href="https://xueqiu.com/snowman/S/{{ $s.kind }}{{ $s.code }}/detail#/ZYCWZB">财务指标</a>
+                                        <a class="dropdown-item" target="_blank" href="https://xueqiu.com/snowman/S/{{ $s.kind }}{{ $s.code }}/detail#/FHPS">分红送配</a>
+                                        <a class="dropdown-item" target="_blank" href="https://xueqiu.com/snowman/S/{{ $s.kind }}{{ $s.code }}/detail#/GDRS">股东人数</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" target="_blank" href="/stocks/weigh/{{ $s.code }}" role="button">股票分析</a>
+                                      </div>
+                                    </div>
+                                   </h3>
+                                </div>
+                              </div>
+                              {{ end }}
+                            </div>
+                    {{ end }}
+                  </div>
+                </div>
+              </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                  <strong>抓住供需关系，把握投机趋势</strong>
+                </div>
+                <div class="card-body">
+                  <div class="my-1">
+                    <textarea class="form-control" rows="5" id="comments" placeholder="记录一下现在的想法吧"></textarea>
+                  </div>
+                  <button onclick="postComments();" class="btn btn-light w-100">发表</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ range $index, $map := .CommentsRows }} 
+
+    <div class="row">
+        <div class="col-8">
+          <div id="comm_id_{{$map.comm_id}}" class="card d-flex flex-column">
+            <div class="card-body d-flex flex-column">
+              <!-- <h3 class="card-title"><a href="#">How do you know she is a witch?</a></h3> -->
+              <div class="text-muted">{{ $map.msg_content }}</div>
+              <div class="d-flex align-items-center pt-2 mt-auto">
+                <span class="avatar avatar-md" style="background-image: url(...)"></span>
+                <div class="ml-3">
+                  <a href="#" class="text-body">{{ $map.created_by }}</a>
+                  <small class="d-block text-muted">{{ $map.created_at }}</small>
+                </div>
+                <div class="ml-auto">
+                  <!-- <a href="javascirpt:void(0);" onclick="deleteComment('{{ $map.comm_id }}')">删贴</a> -->
+                </div>
+              </div>
+            </div>
+          </div>
+      
+          {{ end }}
+          <div class="d-flex align-items-center">
+            {{.PageControl}}
+          </div>
+        </div>
+        <div class="col-4"></div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">分组分配</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form1">
+          <h4 class="mb-4" id="stock_h4"></h4>
+          <input type="hidden" name="company_code" />
+          {{ range $index, $map := .GroupList }}
+            {{ if ne $map.grp_name "未分组" }}
+            <div class="form-check">
+              <input class="form-check-input" name="grp_ckbox" type="checkbox" value="{{ $map.grp_id }}" id="grp_ckbox_{{ $map.grp_id }}">
+              <label class="form-check-label" for="grp_ckbox_{{ $map.grp_id }}">
+                {{ $map.grp_name }}
+              </label>
+            </div>
+            {{ end }}
+          {{ end }}
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+        <button type="button" onclick="saveStockGroupForm();" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function postComments(){
+    var content = document.getElementById("comments").value;
+    if(content.length == 0){
+        document.getElementById("comments").select();
+        return;
+    }
+    $.post("/stocks/center/save_message", {content: content}, function(json){
+        if(json.flag){
+            alert('提交成功');
+            window.location.reload();
+        }else{
+            alert(json.msg);
+        }
+    });
+  }
+  function saveStockGroupForm(){
+      var form = $("#form1");
+      var arr = form.find(":checkbox[name='grp_ckbox']");
+      var valus = [];
+      $.each(arr,function(i, obj){
+        if(obj.checked){
+            valus.push(obj.value);
+        }
+      });
+      var vals = (valus.join(","));
+      var code = form.find(":hidden[name='company_code']").val();
+      $.post("/stocks/group/save_distribution", {grp_ids:vals, code:code},function(data){
+          if(data.flag){
+            alert('保存成功');
+            $("#exampleModal").modal('hide')
+          }
+      })
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    $('#exampleModal').on('show.bs.modal', function (event) {
+      $("#form1").get(0).reset();
+      var button = $(event.relatedTarget) // Button that triggered the modal
+      var code = button.data('stcode') // Extract info from data-* attributes
+      var name = button.data('stabbr') // Extract info from data-* attributes
+      var modal = $(this)
+      modal.find('#stock_h4').text(name + code);
+      modal.find(":hidden[name='company_code']").val(code);
+
+      $.get("/stocks/group/get_grpid_by_code", {code: code},function(data){
+          var list = data.data;
+          for(var i=0;i<list.length;i++){
+            var obj = list[i];
+            var dftgroupid = obj.grp_id;
+            $("#grp_ckbox_" + dftgroupid).get(0).checked = true;
+          }
+      });
+    })
+  });
+</script>

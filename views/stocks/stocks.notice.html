@@ -1,0 +1,133 @@
+<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+<link rel="stylesheet" href="/static/comp/flatpickr/dist/flatpickr.min.css">
+
+
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table-locale-all.min.js"></script>
+
+<script src="/static/comp/flatpickr/dist/flatpickr.min.js"></script>
+<script src="/static/comp/flatpickr/dist/plugins/rangePlugin.js"></script>
+
+
+{{ .StocksModuleNav }}
+
+<div id="toolbar">
+  <form class="row gy-2 gx-3 align-items-center">
+    <div class="col-auto">
+      <select name="kind" id="kind" class="form-select form-select-sm">
+        <option selected value="sh">上交所</option>
+        <option value="sz">深交所</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <div class="input-group input-group-sm">
+        <div class="input-group-text">代码</div>
+        <input type="text" class="form-control" name="code" placeholder="6位数股票代码">
+      </div>
+    </div>
+    <div class="col-auto">
+      <div class="input-group input-group-sm">
+        <div class="input-group-text">开始日期</div>
+        <input type="text" class="form-control datepicker" style="width: 100px;" name="start_date" id="start_date"
+          placeholder="">
+      </div>
+    </div>
+    <div class="col-auto">
+      <div class="input-group input-group-sm">
+        <div class="input-group-text">结束日期</div>
+        <input type="text" class="form-control datepicker" style="width: 100px;" name="end_date" id="end_date"
+          placeholder="">
+      </div>
+    </div>
+    <div class="col-auto">
+      <div class="input-group input-group-sm">
+        <div class="input-group-text">关键字</div>
+        <input type="text" class="form-control" name="search" placeholder="关键字">
+      </div>
+    </div>
+    <div class="col-auto">
+      <button type="button" id="search" class="btn btn-primary btn-sm">查询</button>
+    </div>
+  </form>
+</div>
+
+<table id="table" data-toggle="table" data-locale="zh-CN" data-pagination="true" data-side-pagination="server"
+  data-page-size="25" data-page-list="[10, 25, 50, 100, 200, All]" data-url="/stocks/notice"
+  data-query-params="queryParams" data-method="post" data-cache="true" data-toolbar="#toolbar">
+  <thead>
+    <tr>
+      <th data-field="SSEDATE" data-width="150" data-formatter="rqFormatter">日期</th>
+      <th data-field="SECURITY_NAME" data-width="150" data-formatter="mcFormatter">股票名称</th>
+      <th data-field="TITLE" data-formatter="btFormatter">公告标题</th>
+    </tr>
+  </thead>
+</table>
+
+
+
+
+<script>
+  function queryParams(params) {
+    params.pageno = params.offset / params.limit + 1;
+    params.pagesize = params.limit;
+
+    $('#toolbar').find('input[name]').each(function () {
+      params[$(this).attr('name')] = $(this).val()
+    })
+    $('#toolbar').find('select[name]').each(function () {
+      params[$(this).attr('name')] = $(this).val()
+    })
+    return params;
+  }
+
+  function rqFormatter(value, row) {
+    var kind = $("#kind").val().toUpperCase();
+    return kind == 'SZ' ? row.publishTime.substring(0, 10) : row.SSEDATE;
+  }
+
+  function mcFormatter(value, row) {
+    var kind = $("#kind").val().toUpperCase();
+    if (kind == "SH") {
+      return "<a href='https://xueqiu.com/S/" + kind + "" + row.SECURITY_CODE + "' target='_blank'>" + value + "<br />" + row.SECURITY_CODE + "</a>";
+    }
+    return "<a href='https://xueqiu.com/S/" + kind + "" + row.secCode[0] + "' target='_blank'>" + row.secName[0] + "<br />" + row.secCode[0] + "</a>";
+  }
+
+  function btFormatter(value, row) {
+    var kind = $("#kind").val().toUpperCase();
+    if (kind == "SH") {
+      var sp = '\u003cbr\u003e'
+      var arr1 = row.TITLE.split(sp);
+      var arr2 = row.URL.split(sp);
+      var arr = [];
+      for (var i = 0; i < arr1.length; i++) {
+        arr.push("<a href='http://www.sse.com.cn" + arr2[i] + "' target='_blank'>" + arr1[i] + "</a>");
+      }
+      return arr.join('<br/>');
+    }
+    // var szpdf = "http://disc.static.szse.cn/download" + row.attachPath + "";
+    return "<a href='http://www.szse.cn/disclosure/listed/bulletinDetail/index.html?" + row.id + "' target='_blank'>" + row.title + "</a>";
+  }
+
+  $("#search").on("click", function () {
+    $("#table").bootstrapTable('refresh');
+  })
+
+  $('#toolbar').find('input[name]').on("keyup", function (e) {
+    if (e.keyCode == 13) {
+      $("#table").bootstrapTable('refresh');
+    }
+  });
+  $('#toolbar').find('select[name]').on("change", function (e) {
+    $("#table").bootstrapTable('refresh');
+  });
+
+  $(function () {
+    flatpickr("#start_date", {
+      "plugins": [new rangePlugin({ input: "#end_date" })],
+      defaultDate: new Date(),
+      onChange: function (e) {
+      }
+    });
+  });
+</script>

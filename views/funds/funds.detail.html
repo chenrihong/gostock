@@ -1,0 +1,64 @@
+<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table-locale-all.min.js"></script>
+
+{{ .StocksModuleNav }}
+
+<h4>基金(<a href="https://xueqiu.com/S/F{{.Code}}" target="_blank" title="前往雪球网查看该基金走势">{{.Code}})</a>持仓前十</h4>
+
+<table id="table" data-toggle="table" data-locale="zh-CN" data-pagination="false" data-side-pagination="server"
+    data-page-size="25" data-page-list="[10, 25, 50, 100, 200, All]" data-url="/funds/detail/{{.Code}}/list"
+    data-query-params="queryParams" data-method="post" data-cache="true">
+    <thead>
+        <tr>
+            <th data-field="FUND_CODE" data-width="100" data-formatter="fundFormatter">基金代码</th>
+            <th data-field="STOCK_NAME" data-width="100" data-formatter="stockFormatter">股票名称</th>
+            <th data-field="STOCK_RATE" data-width="100" data-formatter="rateFormatter">个股仓位</th>
+            <th data-field="STOCK_CODE" data-width="100" data-formatter="czFormatter">操作</th>
+        </tr>
+    </thead>
+</table>
+
+
+
+
+<script>
+
+    function fundFormatter(value) {
+        return '<a target="_blank" href="http://fund.eastmoney.com/' + value + '.html">' + value + '</a>';
+    }
+    function stockFormatter(value, row) {
+        var stockCode = row.STOCK_CODE;
+        var kind = 'SH';
+        if (stockCode.substring(0, 1) == '0' || stockCode.substring(0, 1) == '3') {
+            kind = 'SZ';
+        }
+        if (row.ID == -1) {
+            return '<strong>' + value + '<br/>' + stockCode + '</strong>'
+        }
+        return '<a target="_blank" href="https://xueqiu.com/S/' + kind + stockCode + '">' + value + '<br/>' + stockCode + '</a>';
+    }
+    function rateFormatter(value) {
+        return '<span class="text-danger">' + value.toFixed(2) + '%</span>'
+    }
+    function czFormatter(value) {
+        return '<a target="_self" href="/stocks/weigh/' + value + '">股票分析</a>';
+    }
+    function queryParams(params) {
+        params.pageno = params.offset / params.limit + 1;
+        params.pagesize = params.limit;
+
+        $('#toolbar').find('input[name]').each(function () {
+            params[$(this).attr('name')] = $(this).val()
+        })
+        $('#toolbar').find('select[name]').each(function () {
+            params[$(this).attr('name')] = $(this).val()
+        })
+        return params;
+    }
+
+    $(function () {
+
+
+    });
+</script>

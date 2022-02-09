@@ -1,0 +1,95 @@
+{{ .StocksModuleNav }}
+
+<div id="indexContent" class="row row-cols-1 row-cols-md-5 g-5">
+</div>
+
+<h3 id="xueqiuRetie" class="my-2 d-none">雪球热贴 <button type="button" id="reloadBtton"
+    class="btn btn-info btn-sm">刷新</button></h3>
+
+<div id="articleContent" class="row row-cols-1 row-cols-md-1 g-5">
+</div>
+
+<script type="templte-x" id="temp1">
+    <div class="col">
+      <div class="card">
+        <h5 class="card-header"></h5>
+        <div class="card-body">
+          <h5 class="card-title border-bottom"></h5>
+          <p class="card-text"></p>
+        </div>
+      </div>    
+    </div>
+  </script>
+<script type="templte-x" id="temp2">
+    <div class="col">
+      <ul class="list-group list-group-flush">   
+      </ul> 
+    </div>
+  </script>
+
+<script>
+  $(function () {
+
+    function StockIndex() {
+      var indexContent = $("#indexContent").empty();
+      var articleContent = $("#articleContent").empty()
+      var temp1 = $($("#temp1").html());
+      var temp2 = $($("#temp2").html());
+      $("#xueqiuRetie").addClass("d-none");
+      $.get("/stocks/indexhq", {}, function (res) {
+        $("#xueqiuRetie").removeClass("d-none");
+        if (res.flag) {
+          var data = res.data;
+          if (data) {
+            var items = data.data.items;
+            for (var i = 0; i < items.length; i++) {
+              var obj = items[i];
+              var quote = obj.quote;
+
+              var color = "white";
+
+              var arr = [];
+              arr.push("今日：" + quote.current)
+              arr.push("最高：" + quote.high)
+              arr.push("最低：" + quote.low)
+              arr.push("昨收：" + quote.last_close)
+
+              var card = temp1.clone();
+              if (quote.percent > 0) {
+                card.find(".card").removeClass("bg-success").removeClass("bg-secondary").addClass("bg-danger");
+              } else if (quote.percent < 0) {
+                card.find(".card").removeClass("bg-danger").removeClass("bg-secondary").addClass("bg-success");
+              } else {
+                card.find(".card").removeClass("bg-success").removeClass("bg-danger").addClass("bg-secondary");
+              }
+
+              card.find(".card-header").html('<a href="https://xueqiu.com/S/' + quote.symbol + '" target="_blank" class="card-link text-light">' + quote.name + '</a>');
+              card.find(".card-title").css("color", color).html(quote.percent + "%");
+
+              card.find(".card-text").css("color", color).html(arr.join("<br/>"));
+              indexContent.append(card);
+            }
+
+            var xueqiu = res.xueqiu;
+            var group = temp2.clone();
+            for (var i = 0; i < xueqiu.length - 1; i++) {
+              var row = xueqiu[i];
+              var url = '<a class="text-muted p-4 list-group-item" target="_blank" href="' + row.link + '" title="' + row.title + '">' + row.content + '</a>';
+              group.append(url);
+            }
+            articleContent.append(group);
+          }
+        } else {
+          console.error(res.msg);
+        }
+      });
+    }
+
+    StockIndex();
+
+    $("#reloadBtton").on("click", function () {
+      StockIndex();
+    });
+
+  });
+</script>

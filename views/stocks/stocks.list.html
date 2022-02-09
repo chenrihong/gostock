@@ -1,0 +1,144 @@
+{{ .StocksModuleNav }}
+
+<div class="card">
+  <div class="card-header">
+    <div class="row w-100">
+      <div class="col-6">
+        <h3 class="card-title">股票列表</h3>
+      </div>
+      <div class="col-6 text-end">
+        <a href="http://www.sse.com.cn/" class="mx-2 btn btn-primary" target="_blank" role="button">上交所官网</a>
+        <a href="http://www.szse.cn/" class="mx-2 btn btn-primary" target="_blank" role="button">深交所官网</a>
+        <a href="javascript:void(0);" onclick="crawlerData()" class="btn btn-danger" role="button">爬取股票数据</a>
+      </div>
+    </div>
+  </div>
+  <div class="card-body border-bottom py-3">
+    <div class="d-flex">
+      <div class="text-muted">
+        <!-- Show
+        <div class="mx-2 d-inline-block">
+          <input type="text" class="form-control form-control-sm" value="8" size="3">
+        </div>
+        entries -->
+      </div>
+      <div class="ml-auto text-muted">
+        <div class=" d-inline-block">
+          <label class="form-check form-check-inline">
+            <input name="stock_kind" class="form-check-input" type="radio" value="all" {{if eq .SearchKind "all" }}
+              checked {{ end}}>
+            <span class="form-check-label">全部</span>
+          </label>
+          <label class="form-check form-check-inline">
+            <input name="stock_kind" class="form-check-input" type="radio" value="sh" {{if eq .SearchKind "sh" }}
+              checked {{ end}}>
+            <span class="form-check-label">上证</span>
+          </label>
+          <label class="form-check form-check-inline">
+            <input name="stock_kind" class="form-check-input" type="radio" value="sz" {{if eq .SearchKind "sz" }}
+              checked {{ end}}>
+            <span class="form-check-label">深证</span>
+          </label>
+          <label class="form-check form-check-inline">
+            <input name="stock_kind" class="form-check-input" type="radio" value="self" {{if eq .SearchKind "self" }}
+              checked {{ end}}>
+            <span class="form-check-label">自选股</span>
+          </label>
+        </div>
+        关键字:
+        <div class="ml-2 d-inline-block">
+          <input type="text" class="form-control form-control-sm" id="keywords" value="{{.Keywrods}}">
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="doSearch()">搜索</button>
+      </div>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table card-table table-vcenter text-nowrap datatable">
+      <thead>
+        <tr>
+          <th class="w-5 border-bottom">证券代码</th>
+          <th class="w-5 border-bottom">证券简称</th>
+          <th class="w-5 border-bottom">上市日期</th>
+          <th class="w-5 border-bottom">所属行业</th>
+          <th class="w-5 border-bottom">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $index, $map := .StockRows }}
+        <tr class="text-success">
+          <td>{{ $map.company_code }}</td>
+          <td><a href="https://xueqiu.com/S/{{ $map.company_kind }}{{ $map.company_code }}"
+              title="点击前往雪球网：{{$map.company_abbr}}" target="_blank" class="text-reset" tabindex="-1">
+              {{ $map.company_abbr }}</a>
+          </td>
+          <td>{{ $map.listing_date }}</td>
+          <td>{{ $map.company_attr }}</td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton1"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                操作
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                <li><a class="dropdown-item" href="/stocks/weigh/{{ $map.company_code }}">股票分析</a></li>
+                <li><a class="dropdown-item" href="javascript:void(0);"
+                    onclick="addSelfSelct('{{ $map.company_code }}');">加自选</a></li>
+                <li><a class="dropdown-item" href="javascript:void(0);"
+                    onclick="removeSelfSelct('{{ $map.company_code }}');">删自选</a></li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-footer d-flex align-items-center">
+    {{ .PageControl }}
+  </div>
+</div>
+
+
+<script>
+  function removeSelfSelct(code) {
+    $.post("/stocks/selfselect/remove", { code: code }, function (json) {
+      if (json.flag) {
+        alert('删除成功！');
+      } else {
+        alert(json.msg);
+      }
+    });
+  }
+  function addSelfSelct(code) {
+    $.post("/stocks/selfselect/add", { code: code }, function (json) {
+      if (json.flag) {
+        alert('添加成功！');
+      } else {
+        alert(json.msg);
+      }
+    });
+  }
+  function doSearch() {
+    var keywords = document.getElementById("keywords").value;
+    var stock_kind = $(":radio[name='stock_kind']:checked").val();
+    window.location.href = "/stocks/list?keywords=" + keywords + "&kind=" + stock_kind;
+  }
+  function crawlerData() {
+    $.post("/stocks/crawler", {}, function (json) {
+      if (json.flag) {
+        alert('爬取成功！');
+      } else {
+        alert('爬取失败!');
+      }
+    });
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    $("#keywords").on("keyup", function (e) {
+      if (e.keyCode == 13) {
+        doSearch();
+      }
+    })
+  });
+</script>

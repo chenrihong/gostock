@@ -1,0 +1,102 @@
+ {{ .StocksModuleNav }}
+
+ <!--涨跌幅榜-->
+ <div id="stock_hot" class="card text-center">
+    <div class="card-header">
+      <ul id="tabs_hot" class="nav nav-pills card-header-pills">
+        <li class="nav-item">
+          <a class="nav-link active" href="javascript:void(0);" tab="sha_desc">沪A(涨)</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0);" tab="sha_asc">沪A(跌)</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0);" tab="sza_desc">深A(涨)</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0);" tab="sza_asc">深A(跌)</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0);" tab="cyb_desc">创业(涨)</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0);" tab="cyb_asc">创业(跌)</a>
+        </li>
+      </ul>
+    </div>
+    <div id="tabs_hot_body" class="card-body m-0 p-0 bg-light">
+        <div id="tabs_hot_loading" class="spinner-border text-success" style="display: none;" role="status">
+          <span class="sr-only"></span>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+ 
+  $(function () {
+      $("#tabs_hot").find("a").on("click", function (obj) {
+          $("#tabs_hot").find("a").removeClass("active");
+          $(this).addClass("active");
+          var tabid = $(this).attr("tab")
+          var tab = $("#tabs_hot_body").find("table").hide();
+          var len = $("#"+tabid) && $("#"+tabid).length;
+          if(len > 0){
+              $("#tabs_hot_loading").fadeOut(500, function () {
+                  $("#"+tabid).fadeIn(1000);
+              });
+          }else{
+              var loading_div = $("#tabs_hot_loading").show();
+              $.post("/stocks/hot_today",{tabid:tabid, size:100},function(json) {
+                  loading_div.hide();
+                  if(!json.flag){
+                      alert("加载失败");
+                  }else{
+                      var arr = json.data.data.list;
+                      var html = "";
+
+                      html += '<table id="'+ tabid +'" class="table m-0 p-0">';
+                      html += '<thead>';
+
+                      var cols = ["#", "股票", "价格", "涨幅", "市值","成交额", "量比", "分析"];
+                      
+                      html += '<tr class="text-muted">';
+                      for(var i=0; i<cols.length; i++){
+                         html += '<th scope="col" class="border-bottom">'+ cols[i] +'</th>';
+                      }
+                      html += '</tr>';
+
+                      html += '</thead>';
+                      html += '<tbody>';
+                    
+                      var colorcss = tabid.indexOf('desc') > -1 ? 'text-danger' : 'text-success';
+
+                      for(var i=0;i<arr.length;i++){
+                          var row = arr[i];
+                          var tr = '<tr class="'+ colorcss +'">';
+                          tr += '<th scope="row">'+ (i+1) +'</th>';
+                          tr += '<td><a target="_blank" class="'+ colorcss +'" href="https://xueqiu.com/S/'+ row.symbol +'">';
+                          tr += '<u>'+ row.name +'<br/>'+ row.symbol +'</u></a></td>';
+                          tr += '<td>'+ row.current +'</td>';
+                          tr += '<td>'+ row.percent +'%</td>';
+                          tr += '<td>'+ (row.market_capital/ 100000000).toFixed(2) + '亿</td>';
+                          tr += '<td>'+ (row.amount / 100000000).toFixed(2) + '亿</td>'
+                          tr += '<td>'+ (row.volume_ratio ? row.volume_ratio : '/') +'</td>';
+                          tr += '<td><a target="_blank" class="'+ colorcss +'" href="/stocks/weigh/'+ row.symbol.replace(/\D/gi,'') +'">分析</a></td>';
+                          tr += '</tr>';
+                          html += tr;
+                      }
+
+                      html += '</tbody>';
+                      html += '</table>';
+
+                      $("#tabs_hot_body").append(html);
+                  }
+              });
+          }
+      });
+
+      $("#tabs_hot").find("a.active").click();
+  });
+</script>
+

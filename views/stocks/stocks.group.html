@@ -1,0 +1,113 @@
+<div class="container-xl">
+    {{ .StocksModuleNav }}
+
+    <div class="row">
+        <div class="col-8">
+            <div class="table-responsive">
+              <table class="table table-vcenter border">
+                <thead>
+                  <tr>
+                    <th>组名</th>
+                    <th>排序</th>
+                    <th style="width: 120px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{ range $index, $map := .GroupList }} 
+                  <tr>
+                    <td >{{ $map.grp_name }}</td>
+                    <td class="text-muted" >
+                      {{ $map.order_num }}
+                    </td>
+                    <td>
+                      <a href="javascript:void(0);" onclick="editGrp('{{ $map.grp_id }}', '{{ $map.grp_name }}', '{{ $map.order_num }}')">编辑</a>
+                      <a href="javascript:void(0);" class="ml-2" onclick="deleteGrp('{{ $map.grp_id }}')">删除</a>
+                    </td>
+                  </tr>
+                  {{ end }}
+                </tbody>
+              </table>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                  引言
+                </div>
+                <div class="card-body">
+                  <blockquote class="blockquote mb-0">
+                    <p>股票分组，一般可以分为持仓，伏击圈，历史记录</p>
+                    <footer class="blockquote-footer">对股票进行分门别类，方便管理他们<cite title="Source Title">摘自网络</cite></footer>
+                  </blockquote>
+                  <div class="my-3">
+                    <input type="hidden" id="grp_id" />
+                    <input type="hidden" id="action" value="create" />
+
+                    <label class="form-label"></label>
+                    <input class="form-control" id="grp_name" placeholder="分组名称" />
+                  </div>
+                  <div class="my-3">
+                    <label class="form-label"></label>
+                    <input class="form-control" type="number" id="grp_order" placeholder="分组序号" />
+                  </div>
+                  <button onclick="createOrSaveGrpName();" class="btn btn-light w-100">创建或保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  function deleteComment(id){
+      $.post("/stocks/weigh/deletegrp_name", {id: id}, function(json){
+          if(json.flag){
+              alert('删除成功');
+              $("#comm_id_"+id).remove();
+          }else{
+              alert(json.msg);
+          }
+      });
+  }
+
+  function editGrp(id, mc, xh){
+      $("#grp_id").val(id);
+      $("#action").val('edit');
+      $("#grp_name").val(mc);
+      $("#grp_order").val(xh);
+  }
+  function deleteGrp(id){
+      if (confirm("您确认要删除吗？")){
+        $.post("/stocks/group/delete", {grp_id: id}, function(json){
+            if(json.flag){
+                alert('提交成功');
+                window.location.reload();
+            }else{
+                alert(json.msg);
+            }
+        });
+      }
+  }
+
+  function createOrSaveGrpName(){
+    var grp_id = document.getElementById("grp_id").value;
+    var grp_name = document.getElementById("grp_name").value;
+    var grp_order = document.getElementById("grp_order").value || 10;
+    var action = document.getElementById("action").value;
+    
+    if(grp_name.length == 0){
+        document.getElementById("grp_name").select();
+        return;
+    }
+    $.post("/stocks/group/save", {grp_id: grp_id, grp_name: grp_name, grp_order: grp_order, action: action}, function(json){
+        if(json.flag){
+            alert('提交成功');
+            window.location.reload();
+        }else{
+            alert(json.msg);
+        }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+        
+  });
+</script>

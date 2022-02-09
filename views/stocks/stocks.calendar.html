@@ -1,0 +1,170 @@
+<link href="/static/comp/fullcalendar/lib/main.min.css" rel="stylesheet" />
+<script src="/static/comp/fullcalendar/lib/main.min.js"></script>
+<script src="/static/comp/fullcalendar/lib/locales/zh-cn.js"></script>
+
+<style>
+    .card-calendar a {
+        color: #6f6f6f;
+    }
+
+    .fc-col-header a {
+        color: #000;
+    }
+</style>
+
+{{ .StocksModuleNav }}
+
+<div id="calendar-main" class="card-calendar"></div>
+
+<script>
+    var calendar;
+
+    function initCalendar() {
+        var calendarEl = document.getElementById('calendar-main');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            themeSystem: "standard",
+            headerToolbar: {
+                left: 'title',
+                center: '',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth prev,today,next',
+            },
+            //initialDate: '2020-09-12',
+            locale: "zh-cn",
+            buttonIcons: true, // show the prev/next text
+            weekNumbers: false,
+            navLinks: true, // can click day/week names to navigate views
+            editable: false,
+            dayMaxEvents: true, // allow "more" link when too many events
+            dateClick: function (e) {
+                //console.log(e); // date: Thu Oct 08 2020 00:00:00 GMT+0800 (中国标准时间), dateStr: "2020-10-08", allDay: true, dayEl: td.fc
+                // alert('a day has been clicked!');
+            },
+            eventClick: function (info) {
+                // change the border color just for fun
+                // info.el.style.borderColor = 'red';
+                var id = info.event.id;
+                var content = info.event.title;
+                var date = info.event.startStr;
+                var bgcolor = info.event.classNames.join("|");
+
+                $(":radio[name='color']").each(function (i, o) {
+                    if (bgcolor.indexOf(o.value) != -1) {
+                        o.checked = true;
+                    } else {
+                        o.checked = false;
+                    }
+                })
+
+                $("#event_id").val(id);
+                $("#calendar-time").val(date);
+                $("textarea[name='textarea-input']").val(content);
+                addCalendarEvent();
+            },
+            events: function (evtobj, callback) {
+                var start = evtobj.startStr.split('T')[0];
+                var end = evtobj.endStr.split('T')[0];
+
+
+                $.post("/stocks/calendar_events/getdata", {
+                    start: start,
+                    end: end
+                }, function (json) {
+                    if (json.flag) {
+                        var evs = json.data;
+                        var arr = [];
+                        for (var i = 0; i < evs.length; i++) {
+                            var obj = evs[i];
+                            var id = obj.EvtID;
+                            var content = obj.EvtContent;
+                            var d1 = new Date(obj.EvtDate.replace(/-/gi, '/'));
+                            var c1 = 'bg-' + obj.EvtColor + '-lt';
+
+                            arr.push({
+                                id: id,
+                                title: content,
+                                start: d1,
+                                allDay: true,
+                                className: c1,
+                                textColor: '#009966'
+                            });
+                        }
+                        callback(arr);
+                    } else {
+                        alert(json.msg);
+                    }
+                })
+            }
+        });
+
+        calendar.render();
+
+    }
+
+
+    function addCalendarEvent() {
+        var formdiv = $("#form_calendar_event");
+        formdiv.fadeIn();
+    }
+
+    function cancelForm() {
+        $("textarea[name='textarea-input']").val('');
+        var formdiv = $("#form_calendar_event");
+        formdiv.fadeOut();
+    }
+
+    function crawlerNotice(kind) {
+        $.post("/stocks/calendar/crawler_notice", {
+            kind: kind,
+        }, function (json) {
+            alert(1);
+        });
+    }
+
+
+    function submitForm() {
+        var date = $("#calendar-time").val();
+        var bgcolor = $(":radio[name='color']:checked").val();
+        var content = $("textarea[name='textarea-input']").val();
+        var event_id = $("#event_id").val();
+
+        $.post("/stocks/calendar_events/save", {
+            date: date,
+            bgcolor: bgcolor,
+            content: content,
+            event_id: event_id
+        }, function (json) {
+            if (json.flag) {
+                var d1 = new Date(date.replace(/-/gi, '/'));
+                var c1 = 'bg-' + bgcolor + '-lt';
+                var action = json.action;
+
+                calendar.getEventById(json.id) && calendar.getEventById(json.id).remove();
+                if (action == "add" || action == "edt") {
+                    calendar.addEvent({
+                        id: json.id,
+                        title: content,
+                        start: d1,
+                        allDay: true,
+                        className: c1
+                    });
+                }
+
+                cancelForm();
+                $("#alertinfo1").removeClass('d-none');
+                setTimeout(function () {
+                    $("#alertinfo1").addClass('d-none');
+                    $("#alertinfo2").addClass('d-none');
+                }, 2000)
+
+            } else {
+                $("#alertinfo2").removeClass('d-none');
+            }
+        })
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // flatpickr(document.getElementById('calendar-time'), {})
+
+        initCalendar();
+    });
+</script>

@@ -1,0 +1,94 @@
+<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table-locale-all.min.js"></script>
+
+{{ .StocksModuleNav }}
+
+<h6>基金排名</h6>
+
+<div id="toolbar">
+    <form class="row gy-2 gx-3 align-items-center">
+        <div class="col-auto">
+            <!-- <button type="button" id="crawlerBtn" class="btn btn-primary btn-sm">爬取基金数据</button> -->
+        </div>
+    </form>
+</div>
+
+<table id="table" data-toggle="table" data-locale="zh-CN" data-pagination="true" data-side-pagination="server"
+    data-page-size="25" data-page-list="[10, 25, 50, 100, 200, All]" data-url="/funds/list"
+    data-query-params="queryParams" data-method="post" data-cache="true" data-toolbar="#toolbar" data-sort-name="zzf"
+    data-sort-order="desc">
+    <thead>
+        <tr>
+            <th data-field="CODE" data-width="100" data-formatter="dmFormatter">代码</th>
+            <th data-field="NAME" data-width="150" data-formatter="sjFormatter">基金</th>
+            <th data-field="zzf" data-width="100" data-sortable="true" data-formatter="jyzzfFormatter">近1周涨幅</th>
+            <th data-field="1yzf" data-width="100" data-sortable="true" data-formatter="jyyzfFormatter">近1月涨幅</th>
+            <th data-field="jnzf" data-width="100" data-sortable="true" data-formatter="jnlzfFormatter">今年来涨幅</th>
+            <th data-field="NAME" data-width="100" data-formatter="ccFormatter">操作</th>
+        </tr>
+    </thead>
+</table>
+
+
+
+
+<script>
+    function queryParams(params) {
+        params.pageno = params.offset / params.limit + 1;
+        params.pagesize = params.limit;
+
+        $('#toolbar').find('input[name]').each(function () {
+            params[$(this).attr('name')] = $(this).val()
+        })
+        $('#toolbar').find('select[name]').each(function () {
+            params[$(this).attr('name')] = $(this).val()
+        })
+        return params;
+    }
+    function ccFormatter(value, row) {
+        var arr = row.NAME.split(',');
+        return '<a target="_self" href="/funds/detail/' + arr[0] + '">查看持仓</a>';
+    }
+    function dmFormatter(value, row) {
+        var arr = row.NAME.split(',');
+        return arr[0];
+    }
+    function sjFormatter(value, row) {
+        var arr = row.NAME.split(',');
+        return '<a target="_blank" href="http://fund.eastmoney.com/' + arr[0] + '.html">' + arr[1] + '</a>';
+    }
+
+    function jyzzfFormatter(value, row) {
+        var arr = row.NAME.split(',');
+        var val = arr[7] * 1 || 0;
+        var color = val > 0 ? 'red' : 'green';
+        color = val == 0 ? 'black' : color;
+        return '<span style="color:' + color + ';">' + val + '%</span>';
+    }
+
+    function jyyzfFormatter(value, row) {
+        var arr = row.NAME.split(',');
+        var val = arr[8] * 1 || 0;
+        var color = val > 0 ? 'red' : 'green';
+        color = val == 0 ? 'black' : color;
+        return '<span style="color:' + color + ';">' + val + '%</span>';
+    }
+
+
+    function jnlzfFormatter(value, row) {
+        var arr = row.NAME.split(',');
+        var val = arr[14] * 1 || 0;
+        var color = val > 0 ? 'red' : 'green';
+        color = val == 0 ? 'black' : color;
+        return '<span style="color:' + color + ';">' + val + '%</span>';
+    }
+
+    $(function () {
+        // $("#crawlerBtn").click(function () {
+        //     $.post("/funds/crawler", {}, function (json) {
+        //         alert(json.msg);
+        //     });
+        // });
+    });
+</script>

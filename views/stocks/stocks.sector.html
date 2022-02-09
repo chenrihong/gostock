@@ -1,0 +1,80 @@
+<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table-locale-all.min.js"></script>
+
+{{ .StocksModuleNav }}
+
+<h6>今日板块行情</h6>
+<div id="toolbar">
+    <form class="row gy-2 gx-3 align-items-center">
+        <div class="col-auto">
+        </div>
+    </form>
+</div>
+
+<table id="table" data-toggle="table" data-locale="zh-CN" data-pagination="true" data-side-pagination="server"
+    data-page-size="10" data-page-list="[10, 25, 50, 100, 200, All]" data-url="/stocks/hot_sector"
+    data-query-params="queryParams" data-method="post" data-cache="true" data-toolbar="#toolbar" data-sort-name="zzf"
+    data-sort-order="desc">
+    <thead>
+        <tr>
+            <th data-field="f12" data-width="100" data-formatter="bkFormatter">板块</th>
+            <th data-field="f3" data-width="100" data-formatter="f3Formatter">今日涨幅</th>
+            <th data-field="f62" data-width="100" data-formatter="f3cFormatter">主力净流入净额</th>
+            <th data-field="f184" data-width="100" data-formatter="f3Formatter">净占比</th>
+            <th data-field="f204" data-width="100" data-formatter="xueqiuFormatter">今日之最</th>
+        </tr>
+    </thead>
+</table>
+
+
+
+
+<script>
+    function queryParams(params) {
+        params.pageno = params.offset / params.limit + 1;
+        params.pagesize = params.limit;
+
+        $('#toolbar').find('input[name]').each(function () {
+            params[$(this).attr('name')] = $(this).val()
+        })
+        $('#toolbar').find('select[name]').each(function () {
+            params[$(this).attr('name')] = $(this).val()
+        })
+        return params;
+    }
+
+    function xueqiuFormatter(value, row) {
+        var stockCode = row.f205;
+        var kind = 'SH';
+        if (stockCode.substring(0, 1) == '0' || stockCode.substring(0, 1) == '3') {
+            kind = 'SZ';
+        }
+        return '<a target="_blank" href="https://xueqiu.com/S/' + kind + row.f205 + '">' + row.f204 + '<br/>' + row.f205 + '</a>';
+    }
+    function bkFormatter(value, row) {
+        return '<a target="_blank" href="http://quote.eastmoney.com/bk/' + row.f13 + '.' + row.f12 + '.html">' + row.f14 + '<br/>' + row.f12 + '</a>';
+    }
+    function f3Formatter(value, row, index, field) {
+        var color = row.f3 > 0 ? 'red' : 'green';
+        color = row.f3 == 0 ? 'black' : color;
+        return '<span style="color:' + color + '">' + value + '%</span>';
+    }
+    function f3cFormatter(value, row, index, field) {
+        var color = row.f3 > 0 ? 'red' : 'green';
+        color = row.f3 == 0 ? 'black' : color;
+
+        value = (value / 100000000).toFixed(3);
+
+        return '<span style="color:' + color + '">' + value + '亿</span>';
+    }
+
+    $(function () {
+        $("#crawlerBtn").click(function () {
+            $.post("/funds/crawler", {}, function (json) {
+                alert(json.msg);
+            });
+        });
+
+    });
+</script>
