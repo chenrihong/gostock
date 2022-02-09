@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/BurntSushi/toml"
 	"github.com/chenrihong/gostock/controllers"
 
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/recover"
 )
+
+type AppConf struct {
+	PORT uint
+}
 
 func main() {
 	app := iris.New()
@@ -55,7 +60,10 @@ func Start(app *iris.Application) {
 	// 	ctx.View("shared/error.html")
 	// })
 
-	listen := fmt.Sprintf(":%d", 8080)
+	var conf = AppConf{}
+	toml.DecodeFile("./conf.toml", &conf)
+
+	listen := fmt.Sprintf(":%d", conf.PORT)
 	log.Println("程序已经启动成功：您可以访问程序主页：http://localhost" + listen)
 	app.Listen(listen)
 }
